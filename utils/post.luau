@@ -39,11 +39,12 @@ end
 
 local function fetchrss(rss_feed_url: string, helper_url: string)
 	local ws = net.socket(helper_url)
-
+  print(("Fetching feed from %s."):format(rss_feed_url))
 	local req = net.request(rss_feed_url)
 	if not req.ok then
 		ws:close()
-		return nil, "RSS request failed"
+		error("Fetch failed!")
+    return nil, "RSS request failed"
 	end
 
 	ws:send(req.body)
@@ -151,15 +152,15 @@ local function post(rss_feed_url, helper_url, homeserver_url, oauth, maxchars, g
       if link ~= "" then
         text ..= "\n" .. link
       end
-
       local formatted = ("%s\n%s\n\n%s"):format(
         post.title,
         post.pubDate,
         text
       )
-
+      print(("Post %s fetched, posting..."):format(post.title))
       local postreq = masto.post(homeserver_url, oauth, { status = formatted })
-      print(("Posted! %s | %s characters"):format(postreq.url, tostring(#formatted)))
+      if not postreq then return end
+      print(("Posted %s! | %s | %s characters"):format(post.title, postreq.url, tostring(#formatted)))
       add_guid(guid_cache_tbl, post.guid, guid_cache)
     end
   end
